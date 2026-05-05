@@ -1,108 +1,53 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Book, Trophy, Dumbbell, Lock, ChevronRight, Zap } from 'lucide-react';
-import { useUserStore } from '../store/userStore';
+import { Trophy, Search, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const DOMAINS = [
-  { id: 'coding', name: 'Coding', icon: Zap, topics: ["React Architecture", "Python Logic", "Database Design", "CSS Mastery", "Neural Networks"] },
-  { id: 'studies', name: 'Studies', icon: Book, topics: ["Newton's Laws", "Photosynthesis", "Trigonometry", "The Renaissance", "Machine Learning"] },
-  { id: 'sports', name: 'Sports', icon: Trophy, topics: ["Cricket Strategy", "Football Tactics", "Basketball IQ", "Swimming Science", "Endurance Running"] },
-  { id: 'fitness', name: 'Fitness', icon: Dumbbell, topics: ["HIIT Science", "Nutrition 101", "Muscle Hypertrophy", "Recovery Sleep", "Mental Grit"] },
-];
-
 export const QuestMap: React.FC = () => {
-  const [activeDomain, setActiveDomain] = useState('studies');
-  const profile = useUserStore((state) => state.profile);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  const domain = DOMAINS.find(d => d.id === activeDomain);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/learn/${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-10 pb-32">
-       <header className="mb-12">
-          <span className="text-[10px] uppercase font-black tracking-[0.4em] text-[var(--color-primary)]">Mission Selection</span>
-          <h1 className="text-5xl font-black tracking-tighter mt-2">The Quest Map</h1>
+    <div className="max-w-4xl mx-auto px-4 pt-20 pb-32 flex flex-col items-center">
+       <header className="mb-12 text-center">
+          <span className="text-[10px] uppercase font-black tracking-[0.4em] text-[var(--color-primary)]">Infinite Learning</span>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter mt-4 mb-6">What do you want to master today?</h1>
+          <p className="text-xl opacity-60 max-w-2xl mx-auto">
+             Enter any topic, concept, or skill. Our Analogy Engine will generate a personalized lesson mapped directly to your world.
+          </p>
        </header>
 
-       {/* Domain Switcher */}
-       <div className="flex space-x-2 mb-12 p-2 bg-white/5 rounded-2xl overflow-x-auto no-scrollbar">
-          {DOMAINS.map((d) => (
-             <button
-                key={d.id}
-                onClick={() => setActiveDomain(d.id)}
-                className={`flex items-center space-x-3 px-8 py-4 rounded-xl font-bold transition-all whitespace-nowrap ${
-                  activeDomain === d.id 
-                    ? 'bg-[var(--color-primary)] text-white shadow-lg' 
-                    : 'opacity-50 hover:opacity-100 hover:bg-white/5'
-                }`}
-             >
-                <d.icon className="w-5 h-5" />
-                <span>{d.name}</span>
-             </button>
-          ))}
-       </div>
-
-       {/* Topic Grid */}
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {domain?.topics.map((topic, i) => {
-             const isLocked = i > 0; // Simple mock for locking logic
-             return (
-                <motion.div
-                  key={topic}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  whileHover={!isLocked ? { scale: 1.02, y: -4 } : {}}
-                  onClick={() => !isLocked && navigate(`/learn/${encodeURIComponent(topic)}`)}
-                  className={`group relative p-8 rounded-[2.5rem] border-2 h-72 flex flex-col justify-between overflow-hidden transition-all ${
-                    isLocked 
-                      ? 'bg-slate-900/40 border-white/5 grayscale pointer-events-none' 
-                      : 'glass-card border-vibrant hover:border-[var(--color-primary)] cursor-pointer'
-                  }`}
-                >
-                   {/* Background Glow */}
-                   {!isLocked && (
-                      <div className="absolute -top-24 -right-24 w-48 h-48 bg-[var(--color-primary)]/10 rounded-full blur-3xl group-hover:bg-[var(--color-primary)]/20 transition-all" />
-                   )}
-
-                   <div>
-                      <div className="flex justify-between items-start mb-4">
-                         <span className="text-[10px] uppercase font-black tracking-widest opacity-40">Section {i + 1}</span>
-                         {isLocked && <Lock className="w-4 h-4 opacity-20" />}
-                      </div>
-                      <h3 className={`text-2xl font-black leading-tight ${isLocked ? 'opacity-40' : 'opacity-100'}`}>
-                         {topic}
-                      </h3>
-                   </div>
-
-                   <div className="flex items-center justify-between">
-                      {isLocked ? (
-                        <div className="text-[10px] font-bold opacity-20 italic">Unlocks at Level {i + 1}</div>
-                      ) : (
-                        <>
-                           <div className="flex items-center space-x-1">
-                              {[1, 2, 3].map(s => (
-                                 <div key={s} className="w-2 h-2 rounded-full bg-[var(--color-primary)]/20" />
-                              ))}
-                           </div>
-                           <div className="flex items-center text-[var(--color-primary)] font-black text-xs uppercase tracking-widest">
-                              Engage <ChevronRight className="w-4 h-4 ml-1" />
-                           </div>
-                        </>
-                      )}
-                   </div>
-                </motion.div>
-             );
-          })}
-       </div>
+       {/* Custom Topic Search */}
+       <form onSubmit={handleSearch} className="w-full relative group max-w-3xl mb-24">
+          <div className="absolute inset-y-0 left-0 pl-8 flex items-center pointer-events-none">
+             <Search className="w-8 h-8 text-white/40 group-focus-within:text-[var(--color-primary)] transition-colors" />
+          </div>
+          <input
+             type="text"
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             placeholder="Search a topic (e.g., Black Holes, React Hooks, Stoicism)..."
+             className="w-full bg-white/5 border-2 border-white/10 text-white rounded-[3rem] py-8 pl-24 pr-10 text-2xl font-medium focus:outline-none focus:border-[var(--color-primary)] focus:bg-white/10 transition-all placeholder:text-white/30 shadow-2xl"
+          />
+          <button type="submit" className="absolute inset-y-3 right-3 px-10 bg-[var(--color-primary)] text-white rounded-[2.5rem] font-black text-lg uppercase tracking-widest hover:scale-105 transition-transform flex items-center space-x-2">
+             <span>Generate</span>
+             <Sparkles className="w-5 h-5" />
+          </button>
+       </form>
 
        {/* Raid Alert */}
        <motion.div 
          initial={{ opacity: 0, y: 40 }}
          whileInView={{ opacity: 1, y: 0 }}
          viewport={{ once: true }}
-         className="mt-20 p-12 rounded-[3rem] bg-gradient-to-r from-[var(--color-secondary)]/20 to-transparent border-2 border-[var(--color-secondary)]/30 text-center relative overflow-hidden shadow-2xl"
+         className="w-full mt-10 p-12 rounded-[3rem] bg-gradient-to-r from-[var(--color-secondary)]/20 to-transparent border-2 border-[var(--color-secondary)]/30 text-center relative overflow-hidden shadow-2xl"
        >
           <div className="absolute top-0 right-0 p-12 opacity-5 translate-x-12 -translate-y-12 rotate-45">
              <Trophy className="w-80 h-80 text-[var(--color-secondary)]" />

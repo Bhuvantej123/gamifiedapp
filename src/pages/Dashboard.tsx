@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Shield, Zap, Target, Users, ArrowUpRight, Flame } from 'lucide-react';
+import { Shield, Zap, Target, Users, ArrowUpRight, Flame, Award } from 'lucide-react';
 import { XPBar } from '../components/XPBar';
 import { StreakCounter } from '../components/StreakCounter';
-import { RadarChartComponent } from '../components/RadarChart';
+import { AICoreStatus } from '../components/AICoreStatus';
 import { QuestCard } from '../components/QuestCard';
 import { useUserStore } from '../store/userStore';
 import { useGameStore } from '../store/gameStore';
@@ -12,24 +12,53 @@ import { supabase, SUPABASE_CONFIGURED } from '../lib/supabase';
 import { LevelUpModal } from '../components/LevelUpModal';
 
 export const Dashboard: React.FC = () => {
-  const profile = useUserStore((state) => state.profile);
+  const { profile, gameHistory = [] } = useUserStore();
   const theme = themes[profile?.theme || 'harry_potter'];
   const { stats, setStats, quests, setQuests } = useGameStore();
+
+  const displayStats = stats || {
+    user_id: profile?.id || 'guest',
+    total_xp: 0,
+    current_level: 1,
+    streak_count: 0,
+    total_wins: 0,
+    last_active_date: new Date().toISOString(),
+    streak_freeze_count: 0
+  };
+
+  const history = gameHistory || [];
+  const totalWins = displayStats.total_wins || history.filter(g => g.result === 'victory').length;
+  const totalGames = history.length;
+  const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+  
+  // Find most frequent topic safely
+  const topics = history.map(g => g.topic);
+  let favoriteTopic = 'None';
+  if (topics.length > 0) {
+    const counts = topics.reduce((acc, t) => {
+      acc[t] = (acc[t] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    favoriteTopic = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+  }
+
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [prevLevel, setPrevLevel] = useState(1);
+
 
   useEffect(() => {
     if (!profile) return;
 
     const fetchData = async () => {
       if (!SUPABASE_CONFIGURED || profile.id === 'demo-user') {
-        // Set initial mock stats for demo mode
+        // Set initial mock stats for demo mode if absolutely empty
         if (!stats) {
           setStats({
             user_id: profile.id,
-            total_xp: 4200,
-            current_level: 14,
-            streak_count: 12,
+            total_xp: 1200,
+            current_level: 3,
+            streak_count: 5,
+            total_wins: 8,
             last_active_date: new Date().toISOString(),
             streak_freeze_count: 0
           } as any);
@@ -47,48 +76,59 @@ export const Dashboard: React.FC = () => {
       }
 
       // Fetch stats
-      const { data: statsData } = await supabase
-        .from('game_stats')
-        .select('*')
-        .eq('user_id', profile.id)
-        .single();
-      
-      if (statsData) {
-        setStats(statsData);
-        if (statsData.current_level > prevLevel) {
-          setShowLevelUp(true);
-          setPrevLevel(statsData.current_level);
+      try {
+        const { data: statsData } = await supabase
+          .from('game_stats')
+          .select('*')
+          .eq('user_id', profile.id)
+          .single();
+        
+        if (statsData) {
+          setStats(statsData);
+          if (statsData.current_level > prevLevel) {
+            setShowLevelUp(true);
+            setPrevLevel(statsData.current_level);
+          }
         }
+      } catch (err) {
+        console.error('Stats fetch error:', err);
       }
 
       // Fetch active quests
-      const { data: questData } = await supabase
-        .from('quest_progress')
-        .select('*')
-        .eq('user_id', profile.id)
-        .order('last_attempted_at', { ascending: false })
-        .limit(3);
-      
-      if (questData) {
-        setQuests(questData);
-      } else {
-         // Create some initial quests if none exist
-         const initialQuests = [
-            { user_id: profile.id, domain: 'studies', topic: "Newton's Laws", status: 'active', xp_earned: 0 },
-            { user_id: profile.id, domain: 'studies', topic: 'Photosynthesis', status: 'locked', xp_earned: 0 },
-            { user_id: profile.id, domain: 'fitness', topic: 'HIIT Science', status: 'locked', xp_earned: 0 },
-         ];
-         setQuests(initialQuests as any);
+      try {
+        const { data: questData } = await supabase
+          .from('quest_progress')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('last_attempted_at', { ascending: false })
+          .limit(3);
+        
+        if (questData && questData.length > 0) {
+          setQuests(questData);
+        } else if (quests.length === 0) {
+           // Create some initial quests if none exist
+           const initialQuests = [
+              { user_id: profile.id, domain: 'studies', topic: "Newton's Laws", status: 'active', xp_earned: 0 },
+              { user_id: profile.id, domain: 'studies', topic: 'Photosynthesis', status: 'locked', xp_earned: 0 },
+              { user_id: profile.id, domain: 'fitness', topic: 'HIIT Science', status: 'locked', xp_earned: 0 },
+           ];
+           setQuests(initialQuests as any);
+        }
+      } catch (err) {
+        console.error('Quest fetch error:', err);
       }
     };
 
     fetchData();
-  }, [profile, setStats, setQuests, quests.length, prevLevel]);
+  }, [profile, setStats, setQuests, quests.length, prevLevel, stats]);
 
-  if (!profile || !stats) {
+  if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/50 font-black uppercase tracking-widest text-xs">Synchronizing Neural Profile...</p>
+        </div>
       </div>
     );
   }
@@ -97,7 +137,7 @@ export const Dashboard: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 pt-10 pb-32 space-y-12">
       <LevelUpModal 
         isOpen={showLevelUp} 
-        level={stats.current_level} 
+        level={displayStats.current_level} 
         onClose={() => setShowLevelUp(false)} 
       />
 
@@ -128,23 +168,20 @@ export const Dashboard: React.FC = () => {
         {/* Left Column: Stats & XP */}
         <div className="lg:col-span-8 space-y-8">
            <div className="glass-card rounded-[2.5rem] p-8 border-vibrant relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                 <Shield className="w-48 h-48" />
-              </div>
               <XPBar />
               <div className="grid grid-cols-3 gap-6 mt-8 pt-8 border-t border-white/5">
                  <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total Energy</span>
-                    <p className="text-2xl font-black text-[var(--color-primary)]">{stats.total_xp}</p>
+                    <p className="text-2xl font-black text-[var(--color-primary)]">{displayStats.total_xp}</p>
                  </div>
-                 <div className="bg-black/20 p-4 rounded-2xl border border-white/5 text-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Mastered</span>
-                    <p className="text-2xl font-black text-white">12</p>
-                 </div>
-                 <div className="bg-black/20 p-4 rounded-2xl border border-white/5 text-right">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Global Rank</span>
-                    <p className="text-2xl font-black text-[var(--color-secondary)]">#42</p>
-                 </div>
+                  <div className="bg-black/20 p-4 rounded-2xl border border-white/5 text-center">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total Wins</span>
+                    <p className="text-2xl font-black text-white">{totalWins}</p>
+                  </div>
+                  <div className="bg-black/20 p-4 rounded-2xl border border-white/5 text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Favorite Arena</span>
+                    <p className="text-xl font-black text-[var(--color-secondary)] truncate">{favoriteTopic}</p>
+                  </div>
               </div>
            </div>
 
@@ -166,16 +203,75 @@ export const Dashboard: React.FC = () => {
                     </a>
                  ))}
               </div>
-           </section>
-        </div>
+            </section>
+
+            {/* BATTLE RECORDS */}
+            <section>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-black uppercase tracking-widest flex items-center text-white">
+                  <Award className="w-5 h-5 mr-2 text-yellow-500" />
+                  Recent Battles
+                </h2>
+              </div>
+              <div className="glass-card rounded-3xl overflow-hidden border-vibrant">
+                {gameHistory.length > 0 ? (
+                  <div className="divide-y divide-white/5">
+                    {gameHistory.slice(0, 5).map((game) => (
+                      <div key={game.id} className="p-5 flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div className="flex items-center space-x-4">
+                          <div className={`p-3 rounded-xl ${game.result === 'victory' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                            <Shield className={`w-5 h-5 ${game.result === 'victory' ? 'text-green-400' : 'text-red-400'}`} />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-white uppercase text-sm tracking-tight">{game.topic}</h4>
+                            <div className="flex items-center space-x-2">
+                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                                game.difficulty === 'hard' ? 'bg-red-500 text-white' : 
+                                game.difficulty === 'medium' ? 'bg-yellow-500 text-black' : 'bg-green-500 text-black'
+                              }`}>
+                                {game.difficulty}
+                              </span>
+                              <span className="text-[10px] text-white/30 font-mono">
+                                {new Date(game.timestamp).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-sm font-black uppercase tracking-widest ${game.result === 'victory' ? 'text-green-400' : 'text-red-400'}`}>
+                            {game.result}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-12 text-center">
+                    <p className="text-white/30 font-bold uppercase tracking-widest text-xs mb-4">No battle data found in AI logs.</p>
+                    <a href="/lobby" className="text-[var(--color-primary)] font-black text-sm hover:underline uppercase">Enter First Arena</a>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
 
         {/* Right Column: Skill Radar & Squad */}
-        <div className="space-y-8">
+        <div className="lg:col-span-4 space-y-8">
            <div className="glass-card rounded-3xl p-8 border-vibrant">
-              <h3 className="text-sm font-bold uppercase tracking-widest opacity-60 mb-6 flex items-center">
-                 <Target className="w-4 h-4 mr-2" /> Skill Radar
+              <h3 className="text-sm font-bold uppercase tracking-widest opacity-60 mb-6 flex items-center justify-center">
+                 <Award className="w-4 h-4 mr-2 text-yellow-500" /> Battle Intelligence
               </h3>
-              <RadarChartComponent />
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                 <div className="p-4 bg-black/40 rounded-2xl border border-white/5 text-center">
+                    <span className="text-[8px] uppercase font-bold text-slate-400 block tracking-widest mb-1">Win Rate</span>
+                    <p className="text-2xl font-black text-green-400">{winRate}%</p>
+                 </div>
+                 <div className="p-4 bg-black/40 rounded-2xl border border-white/5 text-center">
+                    <span className="text-[8px] uppercase font-bold text-slate-400 block tracking-widest mb-1">Total Battles</span>
+                    <p className="text-2xl font-black text-white">{totalGames}</p>
+                 </div>
+              </div>
+              <AICoreStatus />
               <div className="mt-4 p-4 bg-gradient-to-br from-[var(--color-primary)]/10 to-transparent rounded-xl border border-[var(--color-primary)]/20">
                  <span className="text-[10px] uppercase font-black text-[var(--color-primary)] tracking-widest">AI Command Insight</span>
                  <p className="text-xs italic opacity-70 mt-1 leading-relaxed">

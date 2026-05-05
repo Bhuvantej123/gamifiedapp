@@ -24,7 +24,7 @@ export const AnalogyCard: React.FC<AnalogyCardProps> = ({ data, onRegenerate }) 
         <div className="p-8 bg-gradient-to-br from-[var(--color-primary)]/10 to-transparent">
           <div className="flex items-center space-x-3 mb-6">
             <Sparkles className="w-6 h-6 text-[var(--color-secondary)]" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-[var(--color-secondary)]">The Analogy</h2>
+            <h2 className="text-sm font-black uppercase tracking-widest text-[var(--color-secondary)]">The Analogy (Mapped to Your World)</h2>
           </div>
           
           <div className="text-2xl font-bold leading-relaxed mb-8 italic text-white">

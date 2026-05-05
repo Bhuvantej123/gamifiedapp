@@ -52,9 +52,10 @@ export const Login: React.FC = () => {
 
         if (profileData) {
           setProfile(profileData);
-          navigate('/dashboard');
+          navigate('/lobby');
         } else {
-          navigate('/onboarding');
+          // If no profile, we still go to lobby and let them choose gender/map
+          navigate('/lobby');
         }
       }
     } catch (err: any) {
@@ -154,7 +155,7 @@ export const Login: React.FC = () => {
                   house_or_role: 'STRATEGIST',
                   created_at: new Date().toISOString(),
                 } as any);
-                navigate('/dashboard');
+                navigate('/lobby');
               }}
               className="text-[10px] uppercase font-black tracking-widest text-slate-400 hover:text-[var(--color-primary)] transition-colors"
             >

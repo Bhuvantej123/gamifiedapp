@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { BookOpen, Trophy, Shield, Users, Trophy as LeaderboardIcon, Settings, User } from 'lucide-react';
+import { BookOpen, Trophy, Shield, Users, Trophy as LeaderboardIcon, Settings, User, Gamepad2 } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import { themes } from '../utils/themeConfig';
 
@@ -9,6 +9,7 @@ export const Navbar: React.FC = () => {
   const theme = themes[profile?.theme || 'harry_potter'];
 
   const navItems = [
+    { icon: Gamepad2, label: 'Game', path: '/lobby' },
     { icon: BookOpen, label: 'Dashboard', path: '/dashboard' },
     { icon: Trophy, label: 'Quests', path: '/quests' },
     { icon: Users, label: theme.labels.squad, path: '/squad' },

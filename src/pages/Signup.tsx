@@ -53,7 +53,7 @@ export const Signup: React.FC = () => {
           created_at: new Date().toISOString(),
         };
         setProfile(dummyProfile as any);
-        navigate('/onboarding');
+        navigate('/lobby');
       }
     } catch (err: any) {
       if (err.message === 'Failed to fetch') {
@@ -152,7 +152,7 @@ export const Signup: React.FC = () => {
                   house_or_role: 'STRATEGIST',
                   created_at: new Date().toISOString(),
                 } as any);
-                navigate('/dashboard');
+                navigate('/lobby');
               }}
               className="text-[10px] uppercase font-black tracking-widest text-slate-400 hover:text-[var(--color-primary)] transition-colors"
             >

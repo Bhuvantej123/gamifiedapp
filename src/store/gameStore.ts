@@ -7,6 +7,7 @@ interface GameState {
   setStats: (stats: GameStats) => void;
   setQuests: (quests: QuestProgress[]) => void;
   addXP: (amount: number) => void;
+  recordWin: () => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -23,6 +24,15 @@ export const useGameStore = create<GameState>((set) => ({
         ...state.stats,
         total_xp: newXP,
         current_level: newLevel,
+      },
+    };
+  }),
+  recordWin: () => set((state) => {
+    if (!state.stats) return state;
+    return {
+      stats: {
+        ...state.stats,
+        total_wins: (state.stats.total_wins || 0) + 1,
       },
     };
   }),

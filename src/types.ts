@@ -16,6 +16,8 @@ export interface Profile {
   persona: Persona;
   theme: 'harry_potter' | 'avengers' | 'interstellar';
   house_or_role: string;
+  gender?: 'male' | 'female';
+  selectedMap?: 'coding' | 'sports' | 'fitness' | 'business';
   created_at: string;
 }
 
@@ -24,6 +26,7 @@ export interface GameStats {
   total_xp: number;
   current_level: number;
   streak_count: number;
+  total_wins: number;
   last_active_date: string;
   streak_freeze_count: number;
 }

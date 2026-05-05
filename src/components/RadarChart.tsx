@@ -5,14 +5,14 @@ import { useUserStore } from '../store/userStore';
 export const RadarChartComponent: React.FC = () => {
   const profile = useUserStore((state) => state.profile);
   
-  // Mock data - in real app fetch from guest_progress stats
+  // Mock data - in real app this could be derived from quest performance
   const data = [
-    { subject: 'Math', A: 120, fullMark: 150 },
-    { subject: 'Science', A: 98, fullMark: 150 },
-    { subject: 'Sports', A: 86, fullMark: 150 },
-    { subject: 'Fitness', A: 99, fullMark: 150 },
-    { subject: 'Logic', A: 85, fullMark: 150 },
-    { subject: 'History', A: 65, fullMark: 150 },
+    { subject: 'Intelligence', A: 120, fullMark: 150 },
+    { subject: 'Adaptability', A: 98, fullMark: 150 },
+    { subject: 'Strategy', A: 86, fullMark: 150 },
+    { subject: 'Focus', A: 99, fullMark: 150 },
+    { subject: 'Resilience', A: 85, fullMark: 150 },
+    { subject: 'Creativity', A: 110, fullMark: 150 },
   ];
 
   return (
